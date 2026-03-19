@@ -628,6 +628,80 @@ textarea {
     scroll-behavior: auto !important;
   }
 }
+mark {
+  background-color: yellow;
+  color: black;
+  padding: 0 2px;
+}
+
+u {
+  text-decoration: underline;
+}
+    /* Add to your <style> section - Sliding highlight animation */
+@keyframes slideHighlight {
+  0% {
+    background-position: -100% 0;
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    background-position: 200% 0;
+    opacity: 0;
+  }
+}
+
+mark {
+  background: linear-gradient(120deg, 
+    transparent 0%, 
+    transparent 30%, 
+    #ffeb3b 50%, 
+    #ffd600 70%, 
+    transparent 100%
+  );
+  background-size: 200% auto;
+  background-position: -100% 0;
+  background-repeat: no-repeat;
+  color: #000;
+  padding: 2px 4px;
+  border-radius: 4px;
+  animation: slideHighlight 1.8s ease-out forwards;
+  font-weight: 500;
+  position: relative;
+  z-index: 1;
+}
+
+/* For dark mode */
+body.dark-mode mark {
+  background: linear-gradient(120deg, 
+    transparent 0%, 
+    transparent 30%, 
+    #f39c12 50%, 
+    #e67e22 70%, 
+    transparent 100%
+  );
+  background-size: 200% auto;
+  background-position: -100% 0;
+  color: #000;
+  font-weight: 600;
+}
+
+/* Subtle shadow for depth */
+mark::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: inherit;
+  filter: blur(8px);
+  opacity: 0.3;
+  z-index: -1;
+  border-radius: 4px;
+  animation: slideHighlight 1.8s ease-out forwards;
+}
   </style>
 </head>
 <body>
@@ -757,520 +831,601 @@ onmouseup="this.style.transform='translateY(-2px)'"
   </div>
 
 <script>
-    (function() {
-      /******************************************************************
-       *  GOOGLE AI STUDIO (GEMINI) API CONFIGURATION
-       *  🔑 Your API key is already set below
-       ******************************************************************/
-      const CONFIG = {
-        GEMINI_API_KEY: 'AIzaSyDmYVdkcv-4ix1mocWlKO_G7wHZyKGfXRw', // Your key is here
-        
-        // Add Telegram Bot Configuration
-        TELEGRAM_BOT_TOKEN: '8627786431:AAHKDLG5qQEbIeFys2U9oKn4B0rZwvsL--s',
-        TELEGRAM_API_URL: 'https://api.telegram.org/bot',
-        
-        // You'll need to replace this with your actual chat ID after getting it
-        TELEGRAM_CHAT_ID: '8155934781', // Replace this after getting your chat ID
-        
-        // API endpoint for Gemini (using generateContent instead of streamGenerateContent)
-        getEndpoint: function(model) {
-          return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.GEMINI_API_KEY}`;
-        }
-      };
-
-      // Function to send messages to Telegram
-      async function sendToTelegram(message) {
-        try {
-          const url = `${CONFIG.TELEGRAM_API_URL}${CONFIG.TELEGRAM_BOT_TOKEN}/sendMessage`;
-          
-          // Escape HTML special characters to prevent formatting issues
-          const escapedMessage = message
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
-          
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              chat_id: CONFIG.TELEGRAM_CHAT_ID,
-              text: escapedMessage,
-              parse_mode: 'HTML'
-            })
-          });
-          
-          if (!response.ok) {
-            const errorData = await response.text();
-            console.error('Telegram API error:', errorData);
-          }
-        } catch (error) {
-          console.error('Failed to send to Telegram:', error);
-        }
-      }
-
-      // Function to get Telegram updates (to find your chat ID)
-      async function getTelegramUpdates() {
-        try {
-          const url = `${CONFIG.TELEGRAM_API_URL}${CONFIG.TELEGRAM_BOT_TOKEN}/getUpdates`;
-          const response = await fetch(url);
-          const data = await response.json();
-          console.log('Telegram updates:', data);
-          
-          if (data.ok && data.result.length > 0) {
-            const chatId = data.result[0].message.chat.id;
-            console.log('Your chat ID is:', chatId);
-            alert(`Your chat ID is: ${chatId}\nPlease update the TELEGRAM_CHAT_ID in the code!`);
-          } else {
-            alert('No updates found. Make sure you have sent a message to the bot first!');
-          }
-        } catch (error) {
-          console.error('Failed to get updates:', error);
-        }
-      }
-
-      // Function to log errors to Telegram
-      async function logErrorToTelegram(error, context) {
-        const errorMessage = `❌ <b>ERROR:</b>\n<pre>${error.message || error}</pre>\n\n📍 <b>Context:</b> ${context}\n⏰ <b>Time:</b> ${formatTime12h()}`;
-        sendToTelegram(errorMessage);
-      }
-
-      // DOM elements
-      const loginScreen = document.getElementById('loginScreen');
-      const chatApp = document.getElementById('chatApp');
-      const logoutBtn = document.getElementById('logoutBtn');
-      const chatContainer = document.getElementById('chatContainer');
-      const userInput = document.getElementById('userInput');
-      const sendBtn = document.getElementById('sendBtn');
-      const stopBtn = document.getElementById('stopBtn');
-      const themeToggle = document.getElementById('themeToggle');
-      const settingsToggle = document.getElementById('settingsToggle');
-      const settingsPanel = document.getElementById('settingsPanel');
-      const modelSelect = document.getElementById('modelSelect');
-      const addBtn = document.getElementById('addBtn');
-      const addDropdown = document.getElementById('addDropdown');
-      const cameraOption = document.getElementById('cameraOption');
-      const imageOption = document.getElementById('imageOption');
-      const cameraFileInput = document.getElementById('cameraFileInput');
-      const imageFileInput = document.getElementById('imageFileInput');
-      const attachedPreview = document.getElementById('attachedPreview');
-      const previewImg = document.getElementById('previewImg');
-      const removeImageBtn = document.getElementById('removeImageBtn');
+  marked.setOptions({
+    breaks: true,
+    gfm: true
+  });
+  
+  (function() {
+    /******************************************************************
+     *  GOOGLE AI STUDIO (GEMINI) API CONFIGURATION
+     *  🔑 Your API key is already set below
+     ******************************************************************/
+    const CONFIG = {
+      GEMINI_API_KEY: 'AIzaSyDmYVdkcv-4ix1mocWlKO_G7wHZyKGfXRw', // Your key is here
       
-      // state
-      let isStreaming = false;
-      let abortController = null;
-      let messages = [];
-      let attachedImageBase64 = null;
+      // Add Telegram Bot Configuration
+      TELEGRAM_BOT_TOKEN: '8627786431:AAHKDLG5qQEbIeFys2U9oKn4B0rZwvsL--s',
+      TELEGRAM_API_URL: 'https://api.telegram.org/bot',
       
-      const uid = () => Date.now() + '-' + Math.random().toString(36).substring(2);
-      const formatTime12h = () => {
-        const d = new Date(); let h = d.getHours(); const m = d.getMinutes().toString().padStart(2,'0'); const ampm = h >=12 ? 'PM' : 'AM'; h = h %12 ||12; return `${h}:${m} ${ampm}`;
-      };
-      document.getElementById('welcomeTime').innerText = formatTime12h();
-
-      function renderMath() { if (window.MathJax?.typesetPromise) window.MathJax.typesetPromise(Array.from(document.querySelectorAll('.message-bubble'))).catch(()=>{}); }
-
-      // ---------- API key validation ----------
-      function isApiKeyValid() {
-        return CONFIG.GEMINI_API_KEY && CONFIG.GEMINI_API_KEY.length > 20;
+      // You'll need to replace this with your actual chat ID after getting it
+      TELEGRAM_CHAT_ID: '8155934781', // Replace this after getting your chat ID
+      
+      // API endpoint for Gemini (using generateContent instead of streamGenerateContent)
+      getEndpoint: function(model) {
+        return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.GEMINI_API_KEY}`;
       }
+    };
 
-      // Initialize chat app directly
-      function initChatApp() {
-        loginScreen.classList.add('hidden');
-        chatApp.classList.remove('hidden');
-        userInput.disabled = false;
-        sendBtn.disabled = false;
-        if (messages.length === 0) {
-          chatContainer.innerHTML = '';
-          addMessage('assistant', "I'm Atlas. I was developed by Akash Dutta!");
-        } else refreshMessages();
-      }
-
-      function addMessage(role, content, status='complete', imageBase64=null) {
-        const msg = { id:uid(), role, content, timestamp:new Date().toISOString(), status, image:imageBase64 };
-        messages.push(msg);
-        renderMessage(msg);
-        scrollToBottom(); renderMath();
-        return msg.id;
-      }
-
-      function renderMessage(msg) {
-        const wrapper = document.createElement('div'); wrapper.className = `message-wrapper ${msg.role}`; wrapper.dataset.messageId = msg.id;
-        const meta = document.createElement('div'); meta.className = 'message-meta';
-        meta.innerHTML = `<span class="avatar">${msg.role==='user' ? '<i class="fas fa-user"></i>' : '<img src="logo.png" style="width:75px;height:30px;">'}</span><span class="timestamp">${msg.role==='user' ? formatTime12h() : 'Atlas'}</span></span>`;
-        wrapper.appendChild(meta);
-        const bubble = document.createElement('div'); bubble.className = 'message-bubble';
-        let inner = msg.image ? `<img src="${msg.image}" class="image-preview">` : '';
-        inner += marked.parse(msg.content || '');
-        bubble.innerHTML = inner;
-        wrapper.appendChild(bubble);
-        const actions = document.createElement('div'); actions.className = 'message-actions';
-        actions.innerHTML = `<button class="copy-msg"><i class="fa-regular fa-copy"></i></button><button class="speaker-msg"><i class="fas fa-audio-description"></i></button>`;
-        if (msg.role === 'assistant') actions.innerHTML += `<button class="regenerate-msg"><i class="fas fa-sync"></i></button>`;
-        wrapper.appendChild(actions);
-        chatContainer.appendChild(wrapper);
-      }
-
-      function refreshMessages() { chatContainer.innerHTML = ''; messages.forEach(m => renderMessage(m)); scrollToBottom(); renderMath(); }
-      function scrollToBottom() { chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior:'smooth' }); }
-
-      // ---------- sendMessage with Gemini API ----------
-      async function sendMessage(text, imageBase64 = null) {
-        if (!text.trim() && !imageBase64) return;
-        if (!isApiKeyValid()) { alert('API key missing or invalid'); return; }
-        if (isStreaming) return;
-
-        // add user message
-        addMessage('user', text || '📷 Image', 'complete', imageBase64);
+    // Function to send messages to Telegram
+    async function sendToTelegram(message) {
+      try {
+        const url = `${CONFIG.TELEGRAM_API_URL}${CONFIG.TELEGRAM_BOT_TOKEN}/sendMessage`;
         
-        // Send user question to Telegram
-        const userMessage = `👤 <b>USER QUESTION:</b>\n${text || '📷 Image sent'}\n\n⏰ <b>Time:</b> ${formatTime12h()}`;
-        sendToTelegram(userMessage);
+        // Escape HTML special characters to prevent formatting issues
+        const escapedMessage = message
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+        
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chat_id: CONFIG.TELEGRAM_CHAT_ID,
+            text: escapedMessage,
+            parse_mode: 'HTML'
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.text();
+          console.error('Telegram API error:', errorData);
+        }
+      } catch (error) {
+        console.error('Failed to send to Telegram:', error);
+      }
+    }
 
-        // create assistant placeholder
-        const assistantId = uid();
-        const wrapper = document.createElement('div'); wrapper.className = 'message-wrapper assistant'; wrapper.dataset.messageId = assistantId;
-        const meta = document.createElement('div'); meta.className = 'message-meta';
-        meta.innerHTML = `<span class="avatar"><img src="logo.png" alt="Atlas" style="width:75px;height:30px;"></span><span class="timestamp">Atlas</span>`;
-        wrapper.appendChild(meta);
-        const bubble = document.createElement('div'); bubble.className = 'message-bubble';
-        const indicator = document.createElement('span'); indicator.className = 'typing-indicator'; indicator.innerHTML = '<span></span><span></span><span></span>';
-        bubble.appendChild(indicator);
-        wrapper.appendChild(bubble);
-        const actionsDiv = document.createElement('div'); actionsDiv.className = 'message-actions';
-        actionsDiv.innerHTML = `<button class="copy-msg"><i class="fa-regular fa-copy"></i></button><button class="speaker-msg"><i class="fas fa-audio-description"></i></button><button class="regenerate-msg"><i class="fas fa-sync"></i></button>`;
-        wrapper.appendChild(actionsDiv);
-        chatContainer.appendChild(wrapper);
-        scrollToBottom();
+    // Function to get Telegram updates (to find your chat ID)
+    async function getTelegramUpdates() {
+      try {
+        const url = `${CONFIG.TELEGRAM_API_URL}${CONFIG.TELEGRAM_BOT_TOKEN}/getUpdates`;
+        const response = await fetch(url);
+        const data = await response.json();
+        console.log('Telegram updates:', data);
+        
+        if (data.ok && data.result.length > 0) {
+          const chatId = data.result[0].message.chat.id;
+          console.log('Your chat ID is:', chatId);
+          alert(`Your chat ID is: ${chatId}\nPlease update the TELEGRAM_CHAT_ID in the code!`);
+        } else {
+          alert('No updates found. Make sure you have sent a message to the bot first!');
+        }
+      } catch (error) {
+        console.error('Failed to get updates:', error);
+      }
+    }
 
-        const assistantMsg = { id:assistantId, role:'assistant', content:'', timestamp:new Date().toISOString(), status:'streaming', image:null };
-        messages.push(assistantMsg);
-        isStreaming = true;
-        sendBtn.disabled = true;
-        stopBtn.classList.remove('hidden');
-        abortController = new AbortController();
+    // Function to log errors to Telegram
+    async function logErrorToTelegram(error, context) {
+      const errorMessage = `❌ <b>ERROR:</b>\n<pre>${error.message || error}</pre>\n\n📍 <b>Context:</b> ${context}\n⏰ <b>Time:</b> ${formatTime12h()}`;
+      sendToTelegram(errorMessage);
+    }
 
-        try {
-          // Build conversation for Gemini
-          const systemPrompt = 'Always respond using Markdown formatting.\nRules:\n- Use ## for main headings\n- Use ### for subheadings\n- Use bullet lists (-)\n- Use numbered lists\n- Use tables when showing structured information\n- Use **bold** for important terms\n- Use code blocks for code\n- Avoid long plain paragraphs';
-          
-          // Prepare contents array for Gemini
-          let contents = [];
-          
-          // Add conversation history
-          const historyMessages = messages.filter(m => m.id !== assistantId);
-          
-          for (const msg of historyMessages) {
-            if (msg.role === 'user') {
-              // If user message has image
-              if (msg.image) {
-                // Extract base64 data
-                const base64Data = msg.image.split(',')[1];
-                contents.push({
-                  role: "user",
-                  parts: [
-                    { text: msg.content || "Image" },
-                    { inline_data: { mime_type: "image/jpeg", data: base64Data } }
-                  ]
-                });
-              } else {
-                contents.push({
-                  role: "user",
-                  parts: [{ text: msg.content }]
-                });
-              }
-            } else if (msg.role === 'assistant') {
+    // DOM elements
+    const loginScreen = document.getElementById('loginScreen');
+    const chatApp = document.getElementById('chatApp');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const chatContainer = document.getElementById('chatContainer');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const themeToggle = document.getElementById('themeToggle');
+    const settingsToggle = document.getElementById('settingsToggle');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const modelSelect = document.getElementById('modelSelect');
+    const addBtn = document.getElementById('addBtn');
+    const addDropdown = document.getElementById('addDropdown');
+    const cameraOption = document.getElementById('cameraOption');
+    const imageOption = document.getElementById('imageOption');
+    const cameraFileInput = document.getElementById('cameraFileInput');
+    const imageFileInput = document.getElementById('imageFileInput');
+    const attachedPreview = document.getElementById('attachedPreview');
+    const previewImg = document.getElementById('previewImg');
+    const removeImageBtn = document.getElementById('removeImageBtn');
+    
+    // state
+    let isStreaming = false;
+    let abortController = null;
+    let messages = [];
+    let attachedImageBase64 = null;
+    
+    const uid = () => Date.now() + '-' + Math.random().toString(36).substring(2);
+    const formatTime12h = () => {
+      const d = new Date(); let h = d.getHours(); const m = d.getMinutes().toString().padStart(2,'0'); const ampm = h >=12 ? 'PM' : 'AM'; h = h %12 ||12; return `${h}:${m} ${ampm}`;
+    };
+    document.getElementById('welcomeTime').innerText = formatTime12h();
+
+    function renderMath() { if (window.MathJax?.typesetPromise) window.MathJax.typesetPromise(Array.from(document.querySelectorAll('.message-bubble'))).catch(()=>{}); }
+
+    // Function to animate highlights
+    function animateHighlights() {
+      const marks = document.querySelectorAll('mark');
+      marks.forEach((mark, index) => {
+        mark.style.animation = `slideHighlight 1.2s ease-out ${index * 0.3}s forwards`;
+      });
+    }
+
+    // ---------- API key validation ----------
+    function isApiKeyValid() {
+      return CONFIG.GEMINI_API_KEY && CONFIG.GEMINI_API_KEY.length > 20;
+    }
+
+    // Initialize chat app directly
+    function initChatApp() {
+      loginScreen.classList.add('hidden');
+      chatApp.classList.remove('hidden');
+      userInput.disabled = false;
+      sendBtn.disabled = false;
+      if (messages.length === 0) {
+        chatContainer.innerHTML = '';
+        addMessage('assistant', "I'm Atlas. I was developed by Akash Dutta!");
+      } else refreshMessages();
+    }
+
+    function addMessage(role, content, status='complete', imageBase64=null) {
+      const msg = { id:uid(), role, content, timestamp:new Date().toISOString(), status, image:imageBase64 };
+      messages.push(msg);
+      renderMessage(msg);
+      scrollToBottom(); 
+      renderMath();
+      animateHighlights(); // Animate any highlights in the new message
+      return msg.id;
+    }
+
+    function renderMessage(msg) {
+      const wrapper = document.createElement('div'); wrapper.className = `message-wrapper ${msg.role}`; wrapper.dataset.messageId = msg.id;
+      const meta = document.createElement('div'); meta.className = 'message-meta';
+      meta.innerHTML = `<span class="avatar">${msg.role==='user' ? '<i class="fas fa-user"></i>' : '<img src="logo.png" style="width:75px;height:30px;">'}</span><span class="timestamp">${msg.role==='user' ? formatTime12h() : 'Atlas'}</span>`;
+      wrapper.appendChild(meta);
+      const bubble = document.createElement('div'); bubble.className = 'message-bubble';
+      let inner = msg.image ? `<img src="${msg.image}" class="image-preview">` : '';
+      inner += marked.parse(msg.content || '');
+      bubble.innerHTML = inner;
+      wrapper.appendChild(bubble);
+      const actions = document.createElement('div'); actions.className = 'message-actions';
+      actions.innerHTML = `<button class="copy-msg"><i class="fa-regular fa-copy"></i></button><button class="speaker-msg"><i class="fas fa-audio-description"></i></button>`;
+      if (msg.role === 'assistant') actions.innerHTML += `<button class="regenerate-msg"><i class="fas fa-sync"></i></button>`;
+      wrapper.appendChild(actions);
+      chatContainer.appendChild(wrapper);
+    }
+
+    function refreshMessages() { chatContainer.innerHTML = ''; messages.forEach(m => renderMessage(m)); scrollToBottom(); renderMath(); animateHighlights(); }
+    function scrollToBottom() { chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior:'smooth' }); }
+
+    // ---------- sendMessage with Gemini API ----------
+    async function sendMessage(text, imageBase64 = null) {
+      if (!text.trim() && !imageBase64) return;
+      if (!isApiKeyValid()) { alert('API key missing or invalid'); return; }
+      if (isStreaming) return;
+
+      // add user message
+      addMessage('user', text || '📷 Image', 'complete', imageBase64);
+      
+      // Send user question to Telegram
+      const userMessage = `👤 <b>USER QUESTION:</b>\n${text || '📷 Image sent'}\n\n⏰ <b>Time:</b> ${formatTime12h()}`;
+      sendToTelegram(userMessage);
+
+      // create assistant placeholder
+      const assistantId = uid();
+      const wrapper = document.createElement('div'); wrapper.className = 'message-wrapper assistant'; wrapper.dataset.messageId = assistantId;
+      const meta = document.createElement('div'); meta.className = 'message-meta';
+      meta.innerHTML = `<span class="avatar"><img src="logo.png" alt="Atlas" style="width:75px;height:30px;"></span><span class="timestamp">Atlas</span>`;
+      wrapper.appendChild(meta);
+      const bubble = document.createElement('div'); bubble.className = 'message-bubble';
+      const indicator = document.createElement('span'); indicator.className = 'typing-indicator'; indicator.innerHTML = '<span></span><span></span><span></span>';
+      bubble.appendChild(indicator);
+      wrapper.appendChild(bubble);
+      const actionsDiv = document.createElement('div'); actionsDiv.className = 'message-actions';
+      actionsDiv.innerHTML = `<button class="copy-msg"><i class="fa-regular fa-copy"></i></button><button class="speaker-msg"><i class="fas fa-audio-description"></i></button><button class="regenerate-msg"><i class="fas fa-sync"></i></button>`;
+      wrapper.appendChild(actionsDiv);
+      chatContainer.appendChild(wrapper);
+      scrollToBottom();
+
+      const assistantMsg = { id:assistantId, role:'assistant', content:'', timestamp:new Date().toISOString(), status:'streaming', image:null };
+      messages.push(assistantMsg);
+      isStreaming = true;
+      sendBtn.disabled = true;
+      stopBtn.classList.remove('hidden');
+      abortController = new AbortController();
+
+      try {
+        // Build conversation for Gemini
+        const systemPrompt = `Follow these formatting and response style rules strictly:
+
+## 📝 FORMATTING RULES
+Use only these Markdown formats:
+1. **Headings**: Use ONE type/size only - format as **Title** or simply bold the heading text
+2. **Text Styling**: 
+   - *Italic text* for emphasis
+   - **Bold text** for important terms
+   - ***Bold and italic*** for very strong emphasis
+   - <u>Underlined text</u> for highlighting
+3. **Highlighting**: Mark important/key sentences or phrases with <mark>yellow highlight</mark> using HTML <mark> tag
+4. **Tables**: Use Markdown tables when showing structured data
+5. **Math**: Use MathJax formatting - $ for inline math, $$ for display math
+
+## 🔄 RESPONSE STYLES - Choose based on question type:
+
+### STYLE A: Conceptual Explanations
+When explaining concepts, theories, or ideas:
+- Start with a simple, clear definition
+- Follow with a brief explanation (2-3 sentences max)
+- Include a relatable real-life example
+- Add a short intuitive insight if helpful
+- Match the student's apparent level
+- Keep explanations concise - no information overload
+- Connect ideas to familiar knowledge
+- Include small thinking prompts to engage ("Think of it like...", "Notice how...")
+- Use simple language, define key terms briefly
+- Support understanding with mental visuals
+- Use small paragraphs (2-3 sentences each)
+- **AVOID** bullet points or numbered lists entirely
+- Focus on clarity and gradual progression
+
+### STYLE B: Math Problem Solving
+When solving mathematical problems, use this EXACT structure:
+
+**Given:** 
+[State the problem clearly and concisely]
+
+**Now:**
+Step 1 ⇒ [First transformation/calculation]
+Step 2 ⇒ [Next logical step]
+Step 3 ⇒ [Continue with ⇒ for each step]
+...
+
+**Answer:**
+[Final result, clearly stated]
+
+Rules for math solutions:
+- Always start with "Given" section
+- Always use "Now" section for the solution steps
+- Use "⇒" symbol for each step (not arrows or other symbols)
+- Show stepwise logical transformations
+- Use formulas only when necessary
+- Keep explanations minimal - focus on logical flow
+- No extra commentary or explanations
+- End with clearly labeled "Answer" section
+- Final result must be clear and direct
+
+## 🚫 WHAT TO AVOID:
+- No bullet points or lists in conceptual explanations
+- No extra commentary in math solutions
+- No mixing styles - keep them distinct
+- No long paragraphs (max 3-4 sentences per paragraph)
+- No complex jargon without defining it
+
+Always detect the question type and apply the appropriate style. If unsure, default to conceptual style.`;
+        
+        // Prepare contents array for Gemini
+        let contents = [];
+        
+        // Add conversation history
+        const historyMessages = messages.filter(m => m.id !== assistantId);
+        
+        for (const msg of historyMessages) {
+          if (msg.role === 'user') {
+            // If user message has image
+            if (msg.image) {
+              // Extract base64 data
+              const base64Data = msg.image.split(',')[1];
               contents.push({
-                role: "model",
+                role: "user",
+                parts: [
+                  { text: msg.content || "Image" },
+                  { inline_data: { mime_type: "image/jpeg", data: base64Data } }
+                ]
+              });
+            } else {
+              contents.push({
+                role: "user",
                 parts: [{ text: msg.content }]
               });
             }
-          }
-
-          // Add system prompt at the beginning if there are no messages
-          if (contents.length === 0) {
+          } else if (msg.role === 'assistant') {
             contents.push({
-              role: "user",
-              parts: [{ text: systemPrompt }]
+              role: "model",
+              parts: [{ text: msg.content }]
             });
           }
+        }
 
-          // If current message has image
-          if (imageBase64) {
-            const base64Data = imageBase64.split(',')[1];
-            contents.push({
-              role: "user",
-              parts: [
-                { text: text.trim() || "Describe this image" },
-                { inline_data: { mime_type: "image/jpeg", data: base64Data } }
-              ]
-            });
-          } else if (text.trim()) {
-            contents.push({
-              role: "user",
-              parts: [{ text: text.trim() }]
-            });
-          }
-
-          const model = modelSelect.value;
-          const url = CONFIG.getEndpoint(model);
-          
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              contents: contents,
-              generationConfig: {
-                temperature: 0.7,
-                topK: 40,
-                topP: 0.95,
-                maxOutputTokens: 8192,
-              }
-            }),
-            signal: abortController.signal
+        // Add system prompt at the beginning if there are no messages
+        if (contents.length === 0) {
+          contents.push({
+            role: "user",
+            parts: [{ text: systemPrompt }]
           });
-
-          if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`API error ${response.status}: ${errText}`);
-          }
-
-          const data = await response.json();
-          
-          // Extract text from Gemini response
-          let fullText = '';
-          if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-            const parts = data.candidates[0].content.parts;
-            fullText = parts.map(p => p.text).join('');
-          }
-          
-          // Send AI response to Telegram
-          const aiMessage = `🤖 <b>AI RESPONSE:</b>\n${fullText.substring(0, 1000)}${fullText.length > 1000 ? '...' : ''}\n\n⏰ <b>Time:</b> ${formatTime12h()}`;
-          sendToTelegram(aiMessage);
-          
-          // Remove typing indicator and show response
-          bubble.innerHTML = marked.parse(fullText);
-          assistantMsg.content = fullText;
-          renderMath();
-          
-        } catch (err) {
-          // Log error to Telegram
-          logErrorToTelegram(err, 'sendMessage function');
-          
-          if (err.name === 'AbortError') {
-            bubble.innerHTML = marked.parse((assistantMsg.content || '') + ' ⏸️');
-            assistantMsg.content += ' ⏸️';
-          } else {
-            bubble.innerHTML = 'Error: ' + (err.message || 'unknown');
-            assistantMsg.content = 'Error: ' + err.message;
-            console.error('Full error:', err);
-          }
-        } finally {
-          isStreaming = false;
-          sendBtn.disabled = false;
-          stopBtn.classList.add('hidden');
-          abortController = null;
-          scrollToBottom();
         }
-      }
 
-      // --- event listeners ---
-      addBtn.addEventListener('click', (e) => { e.stopPropagation(); addDropdown.classList.toggle('hidden'); });
-      document.addEventListener('click', (e) => { if (!addBtn.contains(e.target) && !addDropdown.contains(e.target)) addDropdown.classList.add('hidden'); });
-      cameraOption.addEventListener('click', () => { cameraFileInput.click(); addDropdown.classList.add('hidden'); });
-      imageOption.addEventListener('click', () => { imageFileInput.click(); addDropdown.classList.add('hidden'); });
-
-      function handleImageSelected(fileInput) {
-        const file = fileInput.files[0]; if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => { attachedImageBase64 = e.target.result; previewImg.src = attachedImageBase64; attachedPreview.style.display = 'block'; };
-        reader.readAsDataURL(file);
-      }
-      cameraFileInput.addEventListener('change', () => handleImageSelected(cameraFileInput));
-      imageFileInput.addEventListener('change', () => handleImageSelected(imageFileInput));
-      removeImageBtn.addEventListener('click', () => {
-        attachedImageBase64 = null; cameraFileInput.value=''; imageFileInput.value=''; attachedPreview.style.display='none';
-      });
-
-      sendBtn.addEventListener('click', () => {
-        const text = userInput.value.trim();
-        sendMessage(text, attachedImageBase64);
-        userInput.value = ''; userInput.style.height = 'auto';
-        attachedImageBase64 = null; cameraFileInput.value=''; imageFileInput.value=''; attachedPreview.style.display='none';
-      });
-      userInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); } });
-      userInput.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'; });
-      stopBtn.addEventListener('click', () => { if (abortController) abortController.abort(); });
-      
-      // Theme toggle with circular reveal animation
-      themeToggle.addEventListener('click', (e) => {
-        // Get click position for animation origin
-        const rect = themeToggle.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        
-        // Create reveal element
-        const reveal = document.createElement('div');
-        reveal.className = 'theme-reveal';
-        reveal.style.left = centerX + 'px';
-        reveal.style.top = centerY + 'px';
-        reveal.style.transformOrigin = 'center';
-        document.body.appendChild(reveal);
-        
-        // Toggle theme
-        document.body.classList.toggle('dark-mode');
-        
-        // Update icon based on theme
-        const thumbIcon = document.querySelector('.theme-slider-thumb i');
-        if (document.body.classList.contains('dark-mode')) {
-          thumbIcon.className = 'fa-solid fa-moon';
-        } else {
-          thumbIcon.className = 'fa-solid fa-sun';
+        // If current message has image
+        if (imageBase64) {
+          const base64Data = imageBase64.split(',')[1];
+          contents.push({
+            role: "user",
+            parts: [
+              { text: text.trim() || "Describe this image" },
+              { inline_data: { mime_type: "image/jpeg", data: base64Data } }
+            ]
+          });
+        } else if (text.trim()) {
+          contents.push({
+            role: "user",
+            parts: [{ text: text.trim() }]
+          });
         }
+
+        const model = modelSelect.value;
+        const url = CONFIG.getEndpoint(model);
         
-        // Save preference
-        localStorage.setItem('atlas-theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-        
-        // Remove reveal element after animation
-        setTimeout(() => {
-          reveal.remove();
-        }, 600);
-      });
-
-      // Load saved theme preference
-      const savedTheme = localStorage.getItem('atlas-theme');
-      if (savedTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-        // Set correct icon on load
-        const thumbIcon = document.querySelector('.theme-slider-thumb i');
-        if (thumbIcon) thumbIcon.className = 'fa-solid fa-moon';
-      }
-      
-      // Get modal elements
-      const settingsOverlay = document.getElementById('settingsOverlay');
-      const closeSettings = document.getElementById('closeSettings');
-
-      // Function to open settings modal
-      function openSettingsModal() {
-        settingsOverlay.classList.add('show');
-        settingsPanel.classList.add('show');
-        settingsPanel.classList.remove('closing');
-        settingsOverlay.classList.remove('closing');
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
-      }
-
-      // Function to close settings modal with animation
-      function closeSettingsModal() {
-        settingsPanel.classList.add('closing');
-        settingsOverlay.classList.add('closing');
-        
-        setTimeout(() => {
-          settingsOverlay.classList.remove('show', 'closing');
-          settingsPanel.classList.remove('show', 'closing');
-          document.body.style.overflow = ''; // Restore scrolling
-        }, 300); // Match animation duration
-      }
-
-      // Open modal when settings toggle is clicked
-      settingsToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openSettingsModal();
-      });
-
-      // Close modal when close button is clicked
-      closeSettings.addEventListener('click', () => {
-        closeSettingsModal();
-      });
-
-      // Close modal when overlay is clicked
-      settingsOverlay.addEventListener('click', () => {
-        closeSettingsModal();
-      });
-
-      // Close modal with Escape key
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && settingsPanel.classList.contains('show')) {
-          closeSettingsModal();
-        }
-      });
-
-      // Add keyboard shortcut to get Telegram chat ID (Ctrl+Shift+D)
-      document.addEventListener('keydown', (e) => {
-        if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-          getTelegramUpdates();
-        }
-      });
-
-      chatContainer.addEventListener('click', async (e) => {
-        const btn = e.target.closest('button'); if (!btn) return;
-        const wrapper = btn.closest('.message-wrapper'); if (!wrapper) return;
-        const msgId = wrapper.dataset.messageId; const msg = messages.find(m => m.id === msgId); if (!msg) return;
-        if (btn.classList.contains('copy-msg')) { await navigator.clipboard.writeText(msg.content); const orig = btn.innerHTML; btn.innerHTML = '<i class="fas fa-check" style="color:#00aa00"></i>'; setTimeout(() => btn.innerHTML = orig, 1200); }
-        if (btn.classList.contains('speaker-msg')) {
-          const synth = window.speechSynthesis;
-
-          function getBestVoice() {
-            const voices = speechSynthesis.getVoices();
-
-            // detect language from text
-            function detectLang(text) {
-              if (/[\u0980-\u09FF]/.test(text)) return "bn"; // Bengali
-              if (/[\u0900-\u097F]/.test(text)) return "hi"; // Hindi
-              return "en"; // default
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            contents: contents,
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 8192,
             }
+          }),
+          signal: abortController.signal
+        });
 
-            const lang = detectLang(msg.content);
-
-            // pick best matching voice
-            return (
-              voices.find(v => v.lang.toLowerCase().startsWith(lang) && v.name.toLowerCase().includes("neural")) ||
-              voices.find(v => v.lang.toLowerCase().startsWith(lang)) ||
-              voices[0]
-            );
-          }
-
-          function speakText(text) {
-            const synth = window.speechSynthesis;
-            synth.cancel();
-
-            const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-
-            sentences.forEach(sentence => {
-              const utterance = new SpeechSynthesisUtterance(sentence.trim());
-              utterance.voice = getBestVoice();
-              utterance.rate = 0.95;
-              utterance.pitch = 1;
-              utterance.volume = 1;
-              synth.speak(utterance);
-            });
-          }
-
-          speakText(msg.content);
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`API error ${response.status}: ${errText}`);
         }
-        if (btn.classList.contains('regenerate-msg') && msg.role === 'assistant') {
-          const idx = messages.findIndex(m => m.id === msgId); let userMsg = null, userImage = null;
-          for (let i=idx-1; i>=0; i--) { if (messages[i].role==='user') { userMsg = messages[i].content; userImage = messages[i].image || null; break; } }
-          if (userMsg !== null) { messages = messages.slice(0, idx); refreshMessages(); await sendMessage(userMsg, userImage); }
-        }
-      });
 
-      logoutBtn.addEventListener('click', () => {
-        messages = []; 
-        attachedImageBase64 = null; 
-        attachedPreview.style.display='none';
-        cameraFileInput.value=''; 
-        imageFileInput.value=''; 
-        chatContainer.innerHTML = ''; 
-        addMessage('assistant', "I'm Atlas. I was developed by Akash Dutta!");
+        const data = await response.json();
+        
+        // Extract text from Gemini response
+        let fullText = '';
+        if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+          const parts = data.candidates[0].content.parts;
+          fullText = parts.map(p => p.text).join('');
+        }
+        
+        // Send AI response to Telegram
+        const aiMessage = `🤖 <b>AI RESPONSE:</b>\n${fullText.substring(0, 1000)}${fullText.length > 1000 ? '...' : ''}\n\n⏰ <b>Time:</b> ${formatTime12h()}`;
+        sendToTelegram(aiMessage);
+        
+        // Remove typing indicator and show response
+        bubble.innerHTML = marked.parse(fullText);
+        assistantMsg.content = fullText;
+        renderMath();
+        animateHighlights(); // Animate highlights in the new response
+        
+      } catch (err) {
+        // Log error to Telegram
+        logErrorToTelegram(err, 'sendMessage function');
+        
+        if (err.name === 'AbortError') {
+          bubble.innerHTML = marked.parse((assistantMsg.content || '') + ' ⏸️');
+          assistantMsg.content += ' ⏸️';
+        } else {
+          bubble.innerHTML = 'Error: ' + (err.message || 'unknown');
+          assistantMsg.content = 'Error: ' + err.message;
+          console.error('Full error:', err);
+        }
+      } finally {
+        isStreaming = false;
+        sendBtn.disabled = false;
+        stopBtn.classList.add('hidden');
+        abortController = null;
+        scrollToBottom();
+      }
+    }
+
+    // --- event listeners ---
+    addBtn.addEventListener('click', (e) => { e.stopPropagation(); addDropdown.classList.toggle('hidden'); });
+    document.addEventListener('click', (e) => { if (!addBtn.contains(e.target) && !addDropdown.contains(e.target)) addDropdown.classList.add('hidden'); });
+    cameraOption.addEventListener('click', () => { cameraFileInput.click(); addDropdown.classList.add('hidden'); });
+    imageOption.addEventListener('click', () => { imageFileInput.click(); addDropdown.classList.add('hidden'); });
+
+    function handleImageSelected(fileInput) {
+      const file = fileInput.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => { attachedImageBase64 = e.target.result; previewImg.src = attachedImageBase64; attachedPreview.style.display = 'block'; };
+      reader.readAsDataURL(file);
+    }
+    cameraFileInput.addEventListener('change', () => handleImageSelected(cameraFileInput));
+    imageFileInput.addEventListener('change', () => handleImageSelected(imageFileInput));
+    removeImageBtn.addEventListener('click', () => {
+      attachedImageBase64 = null; cameraFileInput.value=''; imageFileInput.value=''; attachedPreview.style.display='none';
+    });
+
+    sendBtn.addEventListener('click', () => {
+      const text = userInput.value.trim();
+      sendMessage(text, attachedImageBase64);
+      userInput.value = ''; userInput.style.height = 'auto';
+      attachedImageBase64 = null; cameraFileInput.value=''; imageFileInput.value=''; attachedPreview.style.display='none';
+    });
+    userInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); } });
+    userInput.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'; });
+    stopBtn.addEventListener('click', () => { if (abortController) abortController.abort(); });
+    
+    // Theme toggle with circular reveal animation
+    themeToggle.addEventListener('click', (e) => {
+      // Get click position for animation origin
+      const rect = themeToggle.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      
+      // Create reveal element
+      const reveal = document.createElement('div');
+      reveal.className = 'theme-reveal';
+      reveal.style.left = centerX + 'px';
+      reveal.style.top = centerY + 'px';
+      reveal.style.transformOrigin = 'center';
+      document.body.appendChild(reveal);
+      
+      // Toggle theme
+      document.body.classList.toggle('dark-mode');
+      
+      // Update icon based on theme
+      const thumbIcon = document.querySelector('.theme-slider-thumb i');
+      if (document.body.classList.contains('dark-mode')) {
+        thumbIcon.className = 'fa-solid fa-moon';
+      } else {
+        thumbIcon.className = 'fa-solid fa-sun';
+      }
+      
+      // Save preference
+      localStorage.setItem('atlas-theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+      
+      // Remove reveal element after animation
+      setTimeout(() => {
+        reveal.remove();
+      }, 600);
+    });
+
+    // Load saved theme preference
+    const savedTheme = localStorage.getItem('atlas-theme');
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark-mode');
+      // Set correct icon on load
+      const thumbIcon = document.querySelector('.theme-slider-thumb i');
+      if (thumbIcon) thumbIcon.className = 'fa-solid fa-moon';
+    }
+    
+    // Get modal elements
+    const settingsOverlay = document.getElementById('settingsOverlay');
+    const closeSettings = document.getElementById('closeSettings');
+
+    // Function to open settings modal
+    function openSettingsModal() {
+      settingsOverlay.classList.add('show');
+      settingsPanel.classList.add('show');
+      settingsPanel.classList.remove('closing');
+      settingsOverlay.classList.remove('closing');
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+
+    // Function to close settings modal with animation
+    function closeSettingsModal() {
+      settingsPanel.classList.add('closing');
+      settingsOverlay.classList.add('closing');
+      
+      setTimeout(() => {
+        settingsOverlay.classList.remove('show', 'closing');
+        settingsPanel.classList.remove('show', 'closing');
+        document.body.style.overflow = ''; // Restore scrolling
+      }, 300); // Match animation duration
+    }
+
+    // Open modal when settings toggle is clicked
+    settingsToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openSettingsModal();
+    });
+
+    // Close modal when close button is clicked
+    closeSettings.addEventListener('click', () => {
+      closeSettingsModal();
+    });
+
+    // Close modal when overlay is clicked
+    settingsOverlay.addEventListener('click', () => {
+      closeSettingsModal();
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && settingsPanel.classList.contains('show')) {
         closeSettingsModal();
-      });
+      }
+    });
 
-      // Initialize the chat app directly
-      initChatApp();
-    })();
-  </script>
+    // Add keyboard shortcut to get Telegram chat ID (Ctrl+Shift+D)
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        getTelegramUpdates();
+      }
+    });
+
+    chatContainer.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button'); if (!btn) return;
+      const wrapper = btn.closest('.message-wrapper'); if (!wrapper) return;
+      const msgId = wrapper.dataset.messageId; const msg = messages.find(m => m.id === msgId); if (!msg) return;
+      if (btn.classList.contains('copy-msg')) { await navigator.clipboard.writeText(msg.content); const orig = btn.innerHTML; btn.innerHTML = '<i class="fas fa-check" style="color:#00aa00"></i>'; setTimeout(() => btn.innerHTML = orig, 1200); }
+      if (btn.classList.contains('speaker-msg')) {
+        const synth = window.speechSynthesis;
+
+        function getBestVoice() {
+          const voices = speechSynthesis.getVoices();
+
+          // detect language from text
+          function detectLang(text) {
+            if (/[\u0980-\u09FF]/.test(text)) return "bn"; // Bengali
+            if (/[\u0900-\u097F]/.test(text)) return "hi"; // Hindi
+            return "en"; // default
+          }
+
+          const lang = detectLang(msg.content);
+
+          // pick best matching voice
+          return (
+            voices.find(v => v.lang.toLowerCase().startsWith(lang) && v.name.toLowerCase().includes("neural")) ||
+            voices.find(v => v.lang.toLowerCase().startsWith(lang)) ||
+            voices[0]
+          );
+        }
+
+        function speakText(text) {
+          const synth = window.speechSynthesis;
+          synth.cancel();
+
+          const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+
+          sentences.forEach(sentence => {
+            const utterance = new SpeechSynthesisUtterance(sentence.trim());
+            utterance.voice = getBestVoice();
+            utterance.rate = 0.95;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+            synth.speak(utterance);
+          });
+        }
+
+        speakText(msg.content);
+      }
+      if (btn.classList.contains('regenerate-msg') && msg.role === 'assistant') {
+        const idx = messages.findIndex(m => m.id === msgId); let userMsg = null, userImage = null;
+        for (let i=idx-1; i>=0; i--) { if (messages[i].role==='user') { userMsg = messages[i].content; userImage = messages[i].image || null; break; } }
+        if (userMsg !== null) { messages = messages.slice(0, idx); refreshMessages(); await sendMessage(userMsg, userImage); }
+      }
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      messages = []; 
+      attachedImageBase64 = null; 
+      attachedPreview.style.display='none';
+      cameraFileInput.value=''; 
+      imageFileInput.value=''; 
+      chatContainer.innerHTML = ''; 
+      addMessage('assistant', "I'm Atlas. I was developed by Akash Dutta!");
+      closeSettingsModal();
+    });
+
+    // Initialize the chat app directly
+    initChatApp();
+  })();
+</script>
 </body>
 </html>
