@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Documentation</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: "Poppins", sans-serif;
+    background:#f5f5f5;
+    color:#111;
+    padding:40px 20px;
+  }
+
+  .container {
+    max-width:900px;
+    margin:auto;
+  }
+
+  h1 {
+    font-size:2.5rem;
+    margin-bottom:30px;
+  }
+
+  .version-card {
+    background:#ffffff;
+    border:1px solid #ddd;
+    border-radius:20px;
+    padding:30px;
+    margin-bottom:25px;
+    box-shadow:0 6px 20px rgba(0,0,0,0.05);
+  }
+
+  .version-title {
+    font-size:1.6rem;
+    margin-bottom:15px;
+  }
+
+  ul {
+    margin-left:20px;
+    line-height:1.8;
+  }
+
+  .footer {
+    margin-top:40px;
+    font-size:0.9rem;
+    color:#666;
+    text-align:center;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    body { background:#0f0f0f; color:#eee; }
+    .version-card { background:#1e1e1e; border-color:#333; }
+  }
+</style>
+</head>
+
+<body>
+<div class="container">
+
+  <h1>Documentations</h1>
+
+<!-- Atlas V2 -->
+<div class="version-card">
+  <div class="version-title">Atlas V2</div>
+
+  <h4>New Features</h4>
+  <br>
+  <ul>
+    <li><strong>Real Google Gemini AI Integration:</strong> Replaces simulated responses with genuine Google Gemini 2.5 models (Flash, Pro, Flash-Lite), enabling real AI-generated content with advanced reasoning.</li>
+
+    <li><strong>Advanced Multi-Language Text-to-Speech:</strong> Detects language using Unicode range scanning (Bengali, Hindi, English), selects appropriate neural voices when available, splits text into sentences for natural pacing, and cancels previous speech before starting new output.</li>
+
+    <li><strong>Modern Modal Settings Panel:</strong> Replaces the basic dropdown with a full-screen modal featuring blur backdrop, smooth animations, keyboard navigation (Escape to close), and click-outside dismissal.</li>
+
+    <li><strong>Animated Theme Slider with Circular Reveal:</strong> Introduces a sliding toggle with animated sun/moon icons and a circular ripple effect triggered from the click point during theme transitions.</li>
+
+    <li><strong>Functional Model Selector:</strong> Model selection now directly determines the Gemini endpoint used for API requests, enabling real control over speed and capability.</li>
+
+    <li><strong>Permanent Assistant Labeling:</strong> Replaces dynamic timestamps with a static “Atlas” label to clearly identify assistant messages and strengthen branding.</li>
+  </ul>
+
+  <br>
+
+  <h4>Reported Problems (Bugs for V3 Consideration)</h4>
+  <br>
+  <ul>
+
+    <li><strong>No Streaming Responses:</strong> Uses non-streaming generateContent endpoint, requiring users to wait for full responses instead of real-time output.</li>
+
+    <li><strong>No Error Recovery for API Failures:</strong> Displays a generic error message without retry options or fallback models.</li>
+
+    <li><strong>Image Handling Lacks Proper MIME Type Detection:</strong> Hardcodes mime_type as "image/jpeg", which may fail for PNG or WebP uploads.</li>
+
+    <li><strong>Conversation History Truncation Risk:</strong> Sends full message history each request without token management, risking context overflow.</li>
+
+    <li><strong>Regenerate Function Creates Duplicate History:</strong> Message slicing may cause UI artifacts or duplicate typing indicators during regeneration.</li>
+
+    <li><strong>No Loading State for Image Attachments:</strong> FileReader processing has no progress indicator, causing perceived UI freeze.</li>
+
+    <li><strong>Theme Animation Performance Issue:</strong> Circular reveal animation may stutter on lower-end devices due to heavy rendering.</li>
+  </ul>
+</div>
+
+<!-- Atlas V1 -->
+<div class="version-card">
+  <div class="version-title">Atlas V1 [RELEASED ON 15TH MARCH, 2026]</div>
+
+  <h4>Features</h4>
+<br>
+  <ul>
+    <li><strong>Puter.js Authentication System:</strong> Login screen with loading animation using Puter authentication before accessing chat.</li>
+    <li><strong>Light/Dark Mode Toggle:</strong> Theme switcher (lightbulb icon) with locally saved user preference.</li>
+    <li><strong>Multi-Modal Input Options:</strong> "+" menu supporting image upload from gallery and direct camera capture.</li>
+    <li><strong>Simulated AI Chat Interface:</strong> User/assistant bubbles, typing indicators, timestamps, and action buttons (copy, text-to-speech, regenerate).</li>
+    <li><strong>Rich Content Rendering:</strong> Markdown, LaTeX (MathJax), tables, and image previews inside chat.</li>
+    <li><strong>Responsive Mobile Design:</strong> Touch-optimized layout, larger tap targets, full-screen mobile support, reduced tap highlights.</li>
+  </ul>
+<br>
+  <h4>Reported Problems</h4>
+<br>
+  <ul>
+    <li><strong>Authentication Fails Silently:</strong> Session validation fails without error handling or fallback, causing login hang issues.</li>
+    <li><strong>Inconsistent Session Handling:</strong> Expired or failed sessions do not properly update UI state, leading to silent API failures.</li>
+    <li><strong>AbortController Mismanagement:</strong> Stopped streams do not update message state correctly, causing incomplete message handling and ordering issues.</li>
+    <li><strong>Image Attachment State Bug:</strong> Image variable does not always reset, sometimes sending previous images unintentionally.</li>
+    <li><strong>Regenerate Function Breaks with Images:</strong> Regeneration loses image context and only resends text.</li>
+    <li><strong>Message Order Corruption During Streaming:</strong> Race condition allows messages to appear in incorrect order.</li>
+    <li><strong>Text-to-Speech Overlap:</strong> Multiple speech instances run simultaneously without canceling previous audio.</li>
+    <li><strong>Model Selector Has No Effect:</strong> Model dropdown does not affect actual API calls, making it non-functional.</li>
+  </ul>
+
+</div>
+
+  <div class="footer">
+    © 2026 Atlas · Developed by Akash Dutta
+  </div>
+
+</div>
+</body>
+</html>
